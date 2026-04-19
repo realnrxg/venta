@@ -1,0 +1,40 @@
+{
+  description = "Venta";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
+  };
+
+  outputs = { self, nixpkgs, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (system: let
+      pkgs = nixpkgs.legacyPackages.${system};
+    in {
+      packages.default = pkgs.stdenv.mkDerivation {
+        pname = "venta";
+        version = "1.0.0";
+        src = ./.;
+        nativeBuildInputs = [ pkgs.makeWrapper pkgs.bash ];
+        buildPhase = "true";
+        installPhase = ''
+          mkdir -p $out/bin
+          cp render_dna_helix.sh $out/bin/venta
+          chmod +x $out/bin/venta
+
+          wrapProgram $out/bin/venta \
+            --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.bash pkgs.gawk pkgs.coreutils ]}
+        '';
+        meta = with pkgs.lib; {
+          description = "DNA simulation in terminal with corruption,recovery,chaos";
+          license = licenses.mit;
+          platforms = platforms.linux;
+          mainProgram = "venta";
+        };
+      };
+
+      apps.default = {
+        type = "app";
+        program = "${self.packages.${system}.default}/bin/venta";
+      };
+    });
+}
