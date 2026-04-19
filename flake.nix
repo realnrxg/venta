@@ -17,12 +17,12 @@
         nativeBuildInputs = [ pkgs.makeWrapper pkgs.bash ];
         buildPhase = "true";
         installPhase = ''
-          mkdir -p $out/bin
-          cp venta.sh $out/bin/venta
-          chmod +x $out/bin/venta
+            mkdir -p $out/bin
+            cp venta.sh $out/bin/venta
+             chmod +x $out/bin/venta
 
-          wrapProgram $out/bin/venta \
-            --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.bash pkgs.gawk pkgs.coreutils ]}
+            wrapProgram $out/bin/venta \
+             --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.bash pkgs.gawk pkgs.coreutils ]}
         '';
         meta = with pkgs.lib; {
           description = "DNA simulation in terminal with corruption,recovery,chaos";
