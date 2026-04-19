@@ -18,7 +18,7 @@
         buildPhase = "true";
         installPhase = ''
           mkdir -p $out/bin
-          cp render_dna_helix.sh $out/bin/venta
+          cp venta.sh $out/bin/venta
           chmod +x $out/bin/venta
 
           wrapProgram $out/bin/venta \
