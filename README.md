@@ -34,6 +34,8 @@ A mininal dna simulator with corruption,recovery,chaos mainly made to be just so
 	  venta.packages.${pkgs.stdenv.hostPlatform.system}.default
 	];
 	```
+</details>
+
 <h1 align="center">
 	CONFIGURATION
 </h1>
