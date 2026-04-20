@@ -14,6 +14,7 @@ A mininal dna simulator with corruption,recovery,chaos mainly made to be just so
 - [INSTALLATION](#INSTALLATION)
 - [CONFIGURATION](#CONFIGURATION)
 - [USAGE](#USAGE)
+- [UPDATING](#UPDATING)
 
 
 <h1 align="center">
@@ -51,3 +52,11 @@ A mininal dna simulator with corruption,recovery,chaos mainly made to be just so
 
 - Run **venta** in your terminal
 - Press **r** if you wanna run a manually recovery
+- Run **venta -V** to check the version you're running
+
+<h1 align="center">
+	UPDATING
+</h1>
+
+- 1st run ``` sudo nix flake update venta```
+- Then ``` sudo nixos-rebuild switch --flake```
