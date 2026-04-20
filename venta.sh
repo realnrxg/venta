@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+if [[ "${1:-}" == "-V" || "${1:-}" == "--version" ]]; then
+  echo "venta ${VENTA_VERSION:-dev}"
+  exit 0
+fi
+
 set -u
 
 hex_to_ansi() {
