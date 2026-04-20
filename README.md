@@ -1,4 +1,5 @@
-# venta
+## VENTA
+A mininal dna simulator with corruption,recovery,chaos mainly made to be just something to use in a screenshot 
 
 
 <h1 align="center">
