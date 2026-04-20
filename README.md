@@ -1,5 +1,5 @@
 <h1 align="center">
-	## VENTA
+	VENTA
 </h1>
 A mininal dna simulator with corruption,recovery,chaos mainly made to be just something to use in a screenshot 
 
