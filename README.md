@@ -49,5 +49,5 @@ A mininal dna simulator with corruption,recovery,chaos mainly made to be just so
 	USAGE
 </h1>
 
-run **venta** in your terminal
-Press **r** if you wanna run a manually recovery
+- Run **venta** in your terminal
+- Press **r** if you wanna run a manually recovery
