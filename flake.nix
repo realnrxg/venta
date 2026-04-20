@@ -9,10 +9,11 @@
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages.${system};
+      ver = "1.0";
     in {
       packages.default = pkgs.stdenv.mkDerivation {
         pname = "venta";
-        version = "1.0";
+        version = ver;
         src = ./.;
         nativeBuildInputs = [ pkgs.makeWrapper pkgs.bash ];
         buildPhase = "true";
@@ -23,7 +24,7 @@
 
           wrapProgram $out/bin/venta \
             --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.bash pkgs.gawk pkgs.coreutils ]} \
-            --set VENTA_VERSION "${version}" 
+            --set VENTA_VERSION "${ver}"
         '';
         meta = with pkgs.lib; {
           description = "DNA simulation in terminal with corruption,recovery,chaos";
