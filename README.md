@@ -12,6 +12,8 @@ A mininal dna simulator with corruption,recovery,chaos mainly made to be just so
 
 ## Table of Contents
 - [INSTALLATION](#INSTALLATION)
+- [CONFIGURATION](#CONFIGURATION)
+- [USAGE](#USAGE)
 
 
 <h1 align="center">
