@@ -27,6 +27,6 @@ Into home.nix add
 ```{ pkgs, venta,  ... }:```
 and into
 
-```home.packages = with pkgs; [
-venta.packages.${pkgs.stdenv.hostPlatform.system}.default
-]```
+ ```home.packages = with pkgs; [```
+```venta.packages.${pkgs.stdenv.hostPlatform.system}.default```
+```]```
