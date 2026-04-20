@@ -11,6 +11,6 @@ A mininal dna simulator with corruption,recovery,chaos mainly made to be just so
 ![Demo](.assets/venta.gif)
 
 
-<h1 aling="center">
+<h1 align="center">
 	INSTALLATION
 </h1>
