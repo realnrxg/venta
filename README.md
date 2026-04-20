@@ -19,4 +19,14 @@ A mininal dna simulator with corruption,recovery,chaos mainly made to be just so
 
 #### Flakes + Home Manager
 Into flake.nix add 
-'''venta.url = "github:realnrxg/venta";'''
+```venta.url = "github:realnrxg/venta";```
+And into outputs add venta
+exmp ```outputs = {self, nixpkgs, home-manager, venta, ...}:```
+
+Into home.nix add
+```{ pkgs, venta,  ... }:```
+and into
+
+```home.packages = with pkgs; [
+venta.packages.${pkgs.stdenv.hostPlatform.system}.default
+]```
