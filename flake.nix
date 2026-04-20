@@ -12,7 +12,7 @@
     in {
       packages.default = pkgs.stdenv.mkDerivation {
         pname = "venta";
-        version = "1.0";
+        version = "1.0.0";
         src = ./.;
         nativeBuildInputs = [ pkgs.makeWrapper pkgs.bash ];
         buildPhase = "true";
