@@ -5,4 +5,4 @@
 	Showcase
 </h1>
 
-[venta.mp4](https://github.com/realnrxg/venta/blob/9330e9953f36445d42af97e98ec88cd2b66f8c90/.assets/venta.mp4)
+[venta.gif](https://github.com/realnrxg/venta/blob/c038160419de3ec395c9975c47c2cc2c6f5ddcb5/.assets/venta.gif)
