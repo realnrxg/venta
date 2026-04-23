@@ -1,4 +1,51 @@
 #!/usr/bin/env bash
+if [[ "${1:-}" == "-V" || "${1:-}" == "--version" ]]; then
+  echo "venta ${VENTA_VERSION:-dev}"
+  exit 0
+fi
+
+if [[ "${1:-}" == "-U" || "${1:-}" == "--update" ]]; then
+  current_ver="${VENTA_VERSION:-dev}"
+  if [[ "$current_ver" == "dev" ]]; then
+    echo "Update check only works with officially installed versions."
+    exit 0
+  fi
+
+  echo "Checking for updates..."
+  if ! command -v curl >/dev/null; then
+    echo "Error: 'curl' is required for update checks."
+    exit 1
+  fi
+
+  latest_json=$(curl -s --max-time 5 "https://api.github.com/repos/realnrxg/venta/releases/latest" 2>/dev/null)
+  if [[ -z "$latest_json" ]]; then
+    echo "Error: Could not reach GitHub."
+    exit 1
+  fi
+
+  tag=$(echo "$latest_json" | grep -o '"tag_name":"[^"]*"' | head -n1 | sed 's/"tag_name":"//;s/"//')
+  if [[ -z "$tag" ]]; then
+    echo "No official releases found on GitHub."
+    exit 0
+  fi
+
+  tag="${tag#v}"
+  current_ver="${current_ver#v}"
+
+  if [[ "$tag" == "$current_ver" ]]; then
+    echo "Venta is up to date (v$current_ver)."
+  else
+    latest_is_newer=$(printf '%s\n%s' "$current_ver" "$tag" | sort -V | tail -n1)
+    if [[ "$latest_is_newer" == "$tag" ]]; then
+      echo "Update available: v$current_ver → v$tag"
+      echo "To update: nix flake update venta && sudo nixos-rebuild switch --flake .#nixosbtw"
+    else
+      echo "You are running a newer version than the latest release (v$current_ver)."
+    fi
+  fi
+  exit 0
+fi
+
 set -u
 
 hex_to_ansi() {
