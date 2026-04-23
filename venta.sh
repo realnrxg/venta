@@ -4,11 +4,10 @@ if [[ "${1:-}" == "-V" || "${1:-}" == "--version" ]]; then
   exit 0
 fi
 
-#dev stuff if i forget like the idiot i am
 if [[ "${1:-}" == "-U" || "${1:-}" == "--update" ]]; then
   current_ver="${VENTA_VERSION:-dev}"
   if [[ "$current_ver" == "dev" ]]; then
-    echo "use the flakes install u bum"
+    echo "use the flakes install u bum" #dev stuff if i forget like a idiot
     exit 0
   fi
 
@@ -41,7 +40,6 @@ if [[ "${1:-}" == "-U" || "${1:-}" == "--update" ]]; then
   if [[ "$tag_clean" == "$current_clean" ]]; then
     echo "Venta is up to date ($tag)."
   else
-    # Use sort -V for proper semantic version comparison
     latest_is_newer=$(printf '%s\n%s' "$current_clean" "$tag_clean" | sort -V | tail -n1)
     if [[ "$latest_is_newer" == "$tag_clean" ]]; then
       echo "Update available: $current_ver → $tag"
@@ -167,6 +165,7 @@ comp=(T A G C)
 rungs=('─' '─' '═' '─' '─' '╌' '─' '═' '─' '╌')
 corrupt=('#' '?' '@' '%' '&' 'X' '!' '/' 'S' '\\')
 shards=('·' '*' '+' 'x' '~')
+crystal=('◆' '◈' '◇' '◊' '▪' '▫' '◉' '○')
 
 tick=0
 BREAK_TOTAL=18
@@ -188,6 +187,10 @@ COLLAPSE_DISSOLVE=45
 COLLAPSE_CHAOS=55
 COLLAPSE_REFORM=90
 collapse_amp=$amp
+reform_progress=0
+
+POST_REFORM_COOLDOWN=350
+post_reform_cooldown=0
 
 base_idx=()
 decay=()
@@ -232,6 +235,7 @@ while (( running && assemble_radius <= cols/2+1 )); do
 
       phase=$(( (assemble_radius*7 + j*9) % 360 ))
       s=${SIN[$phase]}
+      cosv=${COS[$phase]}
       y1=$(( center + (s*amp/1000) ))
       y2=$(( center - (s*amp/1000) ))
       drift=$(( SIN[$(((phase+90)%360))] * 2 / 1000 ))
@@ -253,24 +257,53 @@ while (( running && assemble_radius <= cols/2+1 )); do
         a_col="$COL_DNA_DIM"
       fi
 
+      if   (( cosv > 600 )); then depth=2
+      elif (( cosv > -600 )); then depth=1
+      else                         depth=0; fi
+
       if (( i == y1 || i == y2 )); then
         a_out+="${a_col}${bases[${base_idx[$j]}]}"
+        if (( depth >= 1 && i == y1 && i-1 >= 0 )); then
+          a_out+=$'\033'; a_out+="[$((i));${j}H"
+          a_out+="${COL_DNA_MID}·"
+        fi
+        if (( depth >= 1 && i == y2 && i+1 < rows )); then
+          a_out+=$'\033'; a_out+="[$((i+2));${j}H"
+          a_out+="${COL_DNA_MID}·"
+        fi
       elif (( i > top && i < bot )); then
         dist_from_mid=$(( i - mid_a ))
         (( dist_from_mid < 0 )) && dist_from_mid=$(( -dist_from_mid ))
 
-        case $(((j + i + assemble_radius) % 10)) in
-          0) ch='.' ;; 1) ch=',' ;; 2) ch=':' ;; 3) ch=';' ;; 4) ch='-' ;;
-          5) ch='=' ;; 6) ch='~' ;; 7) ch='_' ;; 8) ch='+' ;; *) ch='*' ;;
-        esac
+        rung_phase=$(( (j + assemble_radius/2) % 5 ))
 
-        if (( dist_from_mid <= 1 )); then
-          case $(((j + i + assemble_radius) % 4)) in
-            0) ch='=' ;; 1) ch='-' ;; 2) ch='+' ;; *) ch=':' ;;
-          esac
+        if (( rung_phase == 0 )); then
+          if (( dist_from_mid == 0 )); then
+            ch='═'
+          elif (( dist_from_mid == 1 && (bot-top-1) > 3 )); then
+            ch='│'
+          else
+            ch='·'
+          fi
+        else
+          if (( dist_from_mid <= 1 )); then
+            case $(((j+i+assemble_radius)%4)) in
+              0) ch='·' ;; 1) ch=',' ;; 2) ch='`' ;; *) ch='.' ;;
+            esac
+          else
+            if (( (j+i+assemble_radius)%7 == 0 )); then
+              ch='·'
+            else
+              ch=' '
+            fi
+          fi
         fi
 
-        a_out+="${a_col}${ch}"
+        if [[ "$ch" != ' ' ]]; then
+          a_out+="${a_col}${ch}"
+        else
+          a_out+=' '
+        fi
       else
         a_out+=' '
       fi
@@ -294,7 +327,7 @@ while (( running )); do
   for ((i=0;i<total;i++)); do chars[$i]=' '; cell_type[$i]=1; done
 
   if (( collapse_state == 0 )); then
-    if (( tick > 1000 )); then
+    if (( tick > 1000 && post_reform_cooldown == 0 )); then
       crit_cols=0
       for ((x=0;x<cols;x++)); do (( decay[x] >= 27 )) && crit_cols=$(( crit_cols+1 )); done
       if (( crit_cols * 100 / cols > 85 )); then
@@ -334,6 +367,7 @@ while (( running )); do
       collapse_state=3
       collapse_timer=$COLLAPSE_REFORM
       collapse_amp=0
+      reform_progress=0
       for ((x=0;x<cols;x++)); do decay[$x]=0; break_timer[$x]=0; done
       recover_cooldown=600
     fi
@@ -346,10 +380,11 @@ while (( running )); do
     if (( collapse_timer <= 0 )); then
       collapse_state=0
       collapse_amp=$amp
+      post_reform_cooldown=$POST_REFORM_COOLDOWN
     fi
   fi
 
-  if (( collapse_state == 0 && glitch_timer == 0 && tick > 40 )); then
+  if (( collapse_state == 0 && glitch_timer == 0 && tick > 40 && post_reform_cooldown == 0 )); then
     if (( RANDOM % 1000 < 7 + tick/160 )); then
       glitch_timer=$((8 + RANDOM%10))
       glitch_center=$((RANDOM%cols))
@@ -389,29 +424,43 @@ while (( running )); do
       y1=$(( center + (s*cur_amp/1000) ))
       y2=$(( center - (s*cur_amp/1000) ))
       drift=$(( SIN[$(((phase+90)%360))]*2/1000 ))
-      y1=$(( y1+drift )); y2=$(( y2-drift ))
+      y1=$(( y1+drift ))
+      y2=$(( y2-drift ))
 
-      abs_s=$(( s<0 ? -s : s ))
-      if   (( abs_s > 666 )); then depth=2
-      elif (( abs_s > 333 )); then depth=1
+      if   (( cosv > 600 )); then depth=2
+      elif (( cosv > -600 )); then depth=1
       else                         depth=0; fi
+
+      if (( collapse_state == 0 )); then
+        breathe=$(( SIN[$((tick * 2 % 360))] * (amp / 6) / 1000 ))
+        y1=$(( y1 - breathe ))
+        y2=$(( y2 + breathe ))
+      fi
+
+      if (( collapse_state == 1 )); then
+        unzip=$(( (COLLAPSE_DISSOLVE - collapse_timer) * (amp / 2) / COLLAPSE_DISSOLVE ))
+        y1=$(( y1 - unzip ))
+        y2=$(( y2 + unzip ))
+      fi
 
       if (( collapse_state == 0 && RANDOM%1000 < 8 )); then base_idx[x]=$((RANDOM%4)); fi
 
       if (( collapse_state == 0 )); then
-        if (( tick>100 && RANDOM%1000 < (1+tick/500) )); then
-          decay[x]=$(( decay[x]+1 ))
+        if (( post_reform_cooldown == 0 )); then
+          if (( tick>100 && RANDOM%1000 < (1+tick/500) )); then
+            decay[x]=$(( decay[x]+1 ))
+          fi
+          if (( decay[x] > 24 )); then
+            if (( x > 0 && RANDOM%100 < 15 )); then
+              decay[$((x-1))]=$(( decay[x-1] + 1 ))
+            fi
+            if (( x < cols-1 && RANDOM%100 < 15 )); then
+              decay[$((x+1))]=$(( decay[x+1] + 1 ))
+            fi
+          fi
         fi
         if (( decay[x]>0 && RANDOM%1000 < 9 )); then
           decay[x]=$(( decay[x]-1 ))
-        fi
-        if (( decay[x] > 24 )); then
-          if (( x > 0 && RANDOM%100 < 15 )); then
-            decay[$((x-1))]=$(( decay[x-1] + 1 ))
-          fi
-          if (( x < cols-1 && RANDOM%100 < 15 )); then
-            decay[$((x+1))]=$(( decay[x+1] + 1 ))
-          fi
         fi
       fi
 
@@ -421,19 +470,9 @@ while (( running )); do
       b_type=$depth
       c_type=$depth
 
-      if (( abs_s > 820 )); then
-        b_strand="$b"; c_strand="$c"
-      elif (( abs_s < 180 )); then
-        b_strand='×'; c_strand='×'
-      elif (( cosv > 0 )); then
-        b_strand='/'; c_strand='/'
-      else
-        b_strand='\'; c_strand='\'
-      fi
-      b="$b_strand"; c="$c_strand"
-
       if (( glitch_timer > 0 )); then
-        dist=$(( x-glitch_center )); (( dist<0 )) && dist=$(( -dist ))
+        dist=$(( x-glitch_center ))
+        (( dist<0 )) && dist=$(( -dist ))
         if (( dist < glitch_strength*5 )); then
           local_push=$(( (glitch_strength*5-dist)/2 ))
           jitter=$(( (RANDOM%3)-1 ))
@@ -443,12 +482,29 @@ while (( running )); do
         fi
       fi
 
-      if (( decay[x]>10 && RANDOM%100 < decay[x] )); then b=${corrupt[$((RANDOM%${#corrupt[@]}))]}; b_type=3; fi
-      if (( decay[x]>10 && RANDOM%100 < decay[x] )); then c=${corrupt[$((RANDOM%${#corrupt[@]}))]}; c_type=3; fi
+      if (( decay[x]>10 && RANDOM%100 < decay[x] )); then
+        b=${corrupt[$((RANDOM%${#corrupt[@]}))]}
+        b_type=3
+      fi
+      if (( decay[x]>10 && RANDOM%100 < decay[x] )); then
+        c=${corrupt[$((RANDOM%${#corrupt[@]}))]}
+        c_type=3
+      fi
 
       if (( collapse_state == 3 )); then
-        (( b_type != 3 )) && b_type=5
-        (( c_type != 3 )) && c_type=5
+        melt=$(( reform_progress * 100 / COLLAPSE_REFORM ))
+        if (( b_type != 3 )); then
+          b_type=5
+          if (( RANDOM % 100 >= melt )); then
+            b=${crystal[$((RANDOM % ${#crystal[@]}))]}
+          fi
+        fi
+        if (( c_type != 3 )); then
+          c_type=5
+          if (( RANDOM % 100 >= melt )); then
+            c=${crystal[$((RANDOM % ${#crystal[@]}))]}
+          fi
+        fi
       fi
 
       if (( recover_active )); then
@@ -476,21 +532,38 @@ while (( running )); do
       bridge_height=$(( bot-top-1 ))
 
       if (( break_timer[x]==0 )); then
+        rung_phase=$(( (x + tick/2) % 5 ))
+
         for ((y=top+1; y<bot; y++)); do
           dist_from_mid=$(( y-mid_y ))
           (( dist_from_mid < 0 )) && dist_from_mid=$(( -dist_from_mid ))
 
-          if (( dist_from_mid <= 1 )); then
-            case $(((x + y + tick) % 4)) in
-              0) ch='=' ;; 1) ch='-' ;; 2) ch='+' ;; *) ch=':' ;;
-            esac
-            flag=$depth
+          if (( rung_phase == 0 )); then
+            if (( dist_from_mid == 0 )); then
+              ch='═'
+              flag=$depth
+            elif (( dist_from_mid == 1 && bridge_height > 3 )); then
+              ch='│'
+              flag=$depth
+            else
+              ch='·'
+              flag=$depth
+            fi
           else
-            case $(((x + y + tick) % 10)) in
-              0) ch='.' ;; 1) ch=',' ;; 2) ch=':' ;; 3) ch=';' ;; 4) ch='-' ;;
-              5) ch='=' ;; 6) ch='~' ;; 7) ch='_' ;; 8) ch='+' ;; *) ch='*' ;;
-            esac
-            flag=$depth
+            if (( dist_from_mid <= 1 )); then
+              case $(((x+y+tick)%4)) in
+                0) ch='·' ;; 1) ch=',' ;; 2) ch='`' ;; *) ch='.' ;;
+              esac
+              flag=$depth
+            else
+              if (( (x+y+tick)%7 == 0 )); then
+                ch='·'
+                flag=$depth
+              else
+                ch=' '
+                flag=1
+              fi
+            fi
           fi
 
           if (( decay[x]>14 && RANDOM%100 < decay[x]/2 )); then
@@ -507,6 +580,14 @@ while (( running )); do
             fi
           fi
 
+          if (( collapse_state == 3 )); then
+            melt=$(( reform_progress * 100 / COLLAPSE_REFORM ))
+            if (( RANDOM % 100 >= melt )); then
+              ch=${crystal[$((RANDOM % ${#crystal[@]}))]}
+              flag=5
+            fi
+          fi
+
           if (( recover_active )); then
             wave_dist=$(( x-recover_x ))
             (( wave_dist<0 )) && wave_dist=$(( -wave_dist ))
@@ -514,41 +595,56 @@ while (( running )); do
               flag=4
               (( wave_dist<3 )) && ch='|'
             elif (( wave_dist >= recover_width && wave_dist < recover_width*3 )); then
-               if (( wave_dist < recover_width*2 )); then
-                 flag=6
-               else
-                 flag=7
-               fi
+              if (( wave_dist < recover_width*2 )); then
+                flag=6
+              else
+                flag=7
+              fi
             fi
           fi
 
           put_char "$y" "$x" "$ch" $flag
         done
 
-        if (( x%3 == 0 )); then
-          put_char $((y1-1)) "$x" '·' $((depth>0 ? depth-1 : 0))
-          put_char $((y2+1)) "$x" '·' $((depth>0 ? depth-1 : 0))
+        if (( depth >= 1 )); then
+          if (( y1-1 >= 0 )); then
+            put_char $((y1-1)) "$x" '·' $((depth>0 ? depth-1 : 0))
+          fi
+          if (( y2+1 < rows )); then
+            put_char $((y2+1)) "$x" '·' $((depth>0 ? depth-1 : 0))
+          fi
+        fi
+
+        if (( depth == 2 )); then
+          if (( y1-2 >= 0 )); then
+            put_char $((y1-2)) "$x" ',' $((depth>1 ? depth-2 : 0))
+          fi
+          if (( y2+2 < rows )); then
+            put_char $((y2+2)) "$x" ',' $((depth>1 ? depth-2 : 0))
+          fi
         fi
 
       elif (( break_timer[x] > BREAK_TOTAL-BREAK_SNAP )); then
         snap_frame=$(( BREAK_TOTAL-break_timer[x] ))
         tear_radius=$(( snap_frame*bridge_height/(BREAK_SNAP*2)+1 ))
         for ((y=top+1; y<bot; y++)); do
-          dist_from_mid=$(( y-mid_y )); (( dist_from_mid<0 )) && dist_from_mid=$(( -dist_from_mid ))
+          dist_from_mid=$(( y-mid_y ))
+          (( dist_from_mid<0 )) && dist_from_mid=$(( -dist_from_mid ))
           if (( dist_from_mid<=tear_radius )); then
             if (( dist_from_mid==tear_radius )); then
               case $(( (x+y+tick)%4 )) in 0) ch='\';; 1) ch='/';; 2) ch='~';; *) ch='-';; esac
               put_char "$y" "$x" "$ch" 3
             fi
           else
-            ch=${rungs[$(((x+y+tick)%${#rungs[@]}))]}; put_char "$y" "$x" "$ch" $depth
+            ch=${rungs[$(((x+y+tick)%${#rungs[@]}))]}
+            put_char "$y" "$x" "$ch" $depth
           fi
         done
         case $(( tick%3 )) in 0) b_type=3;b='\';; 1) b_type=3;b='/';; *) b_type=3;; esac
         case $(( (tick+1)%3 )) in 0) c_type=3;c='\';; 1) c_type=3;c='/';; *) c_type=3;; esac
       else
-        fall_age=$(( BREAK_TOTAL - break_timer[x] - BREAK_SNAP )) # 0 → ~13
-        max_fall=$(( cols / 4 )) # Limits how far debris falls before vanishing
+        fall_age=$(( BREAK_TOTAL - break_timer[x] - BREAK_SNAP ))
+        max_fall=$(( cols / 4 ))
 
         if (( fall_age < max_fall )); then
           dy1=$(( y1 + fall_age + ( (x+tick)%2 ) ))
@@ -600,6 +696,10 @@ while (( running )); do
       glitch_timer=$(( glitch_timer-1 ))
     fi
 
+  fi
+
+  if (( post_reform_cooldown > 0 )); then
+    post_reform_cooldown=$(( post_reform_cooldown - 1 ))
   fi
 
   half=$(( PULSE_STEPS/2 ))
@@ -670,6 +770,9 @@ while (( running )); do
     wave_pct=$(( recover_x * 100 / cols ))
     (( wave_pct > 100 )) && wave_pct=100
     wave_str="REPAIR ${wave_pct}%"
+  elif (( post_reform_cooldown > 0 )); then
+    cd_sec=$(( (post_reform_cooldown + FPS - 1) / FPS ))
+    wave_str="STABLE ${cd_sec}s"
   elif (( recover_cooldown>0 )); then wave_str="COOLDOWN"
   else                               wave_str="STANDBY "; fi
 
