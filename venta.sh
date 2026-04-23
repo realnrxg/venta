@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 if [[ "${1:-}" == "-V" || "${1:-}" == "--version" ]]; then
-  echo "${VENTA_VERSION:-dev}"
+  echo "venta ${VENTA_VERSION:-dev}"
   exit 0
 fi
 
@@ -12,35 +12,41 @@ if [[ "${1:-}" == "-U" || "${1:-}" == "--update" ]]; then
   fi
 
   echo "Checking for updates..."
-  if ! command -v curl >/dev/null; then
-    echo "Error: 'curl' is required for update checks."
-    exit 1
+
+  if command -v jq >/dev/null; then
+    latest_json=$(curl -s --max-time 5 "https://api.github.com/repos/realnrxg/venta/releases/latest" 2>/dev/null)
+    if [[ -z "$latest_json" ]] || echo "$latest_json" | jq -e '.message' >/dev/null 2>&1; then
+      echo "Error: Could not reach GitHub or rate limited."
+      exit 1
+    fi
+    tag=$(echo "$latest_json" | jq -r '.tag_name')
+  else
+    latest_json=$(curl -s --max-time 5 "https://api.github.com/repos/realnrxg/venta/releases/latest" 2>/dev/null)
+    if [[ -z "$latest_json" ]]; then
+      echo "Error: Could not reach GitHub."
+      exit 1
+    fi
+    tag=$(echo "$latest_json" | grep -o '"tag_name":"[^"]*"' | head -n1 | sed 's/"tag_name":"//;s/"//')
   fi
 
-  latest_json=$(curl -s --max-time 5 "https://api.github.com/repos/realnrxg/venta/releases/latest" 2>/dev/null)
-  if [[ -z "$latest_json" ]]; then
-    echo "Error: Could not reach GitHub."
-    exit 1
-  fi
-
-  tag=$(echo "$latest_json" | grep -o '"tag_name":"[^"]*"' | head -n1 | sed 's/"tag_name":"//;s/"//')
   if [[ -z "$tag" ]]; then
     echo "No official releases found on GitHub."
     exit 0
   fi
 
-  tag="${tag#v}"
-  current_ver="${current_ver#v}"
+  tag_clean="${tag#v}"
+  current_clean="${current_ver#v}"
 
-  if [[ "$tag" == "$current_ver" ]]; then
-    echo "Venta is up to date (v$current_ver)."
+  if [[ "$tag_clean" == "$current_clean" ]]; then
+    echo "Venta is up to date ($tag)."
   else
-    latest_is_newer=$(printf '%s\n%s' "$current_ver" "$tag" | sort -V | tail -n1)
-    if [[ "$latest_is_newer" == "$tag" ]]; then
-      echo "Update available: v$current_ver → v$tag"
+    # Use sort -V for proper semantic version comparison
+    latest_is_newer=$(printf '%s\n%s' "$current_clean" "$tag_clean" | sort -V | tail -n1)
+    if [[ "$latest_is_newer" == "$tag_clean" ]]; then
+      echo "Update available: $current_ver → $tag"
       echo "To update: nix flake update venta && sudo nixos-rebuild switch --flake .#nixosbtw"
     else
-      echo "You are running a newer version than the latest release (v$current_ver)."
+      echo "You are running a newer version than the latest release ($current_ver > $tag)."
     fi
   fi
   exit 0
