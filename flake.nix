@@ -9,7 +9,7 @@
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages.${system};
-      ver = "1.1.1";
+      ver = "1.2";
     in {
       packages.default = pkgs.stdenv.mkDerivation {
         pname = "venta";
