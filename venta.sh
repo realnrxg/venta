@@ -4,34 +4,34 @@ if [[ "${1:-}" == "-V" || "${1:-}" == "--version" ]]; then
   exit 0
 fi
 
-#dev stuff
+#dev stuff if i forget like the idiot i am
 if [[ "${1:-}" == "-U" || "${1:-}" == "--update" ]]; then
   current_ver="${VENTA_VERSION:-dev}"
   if [[ "$current_ver" == "dev" ]]; then
-    echo "Update check only works with officially installed versions."
+    echo "use the flakes install u bum"
     exit 0
   fi
 
-  echo "Checking for updates..."
+  echo "Checking for updates"
 
   if command -v jq >/dev/null; then
     latest_json=$(curl -s --max-time 5 "https://api.github.com/repos/realnrxg/venta/releases/latest" 2>/dev/null)
     if [[ -z "$latest_json" ]] || echo "$latest_json" | jq -e '.message' >/dev/null 2>&1; then
-      echo "Error: Could not reach GitHub or rate limited."
+      echo "Rate limited"
       exit 1
     fi
     tag=$(echo "$latest_json" | jq -r '.tag_name')
   else
     latest_json=$(curl -s --max-time 5 "https://api.github.com/repos/realnrxg/venta/releases/latest" 2>/dev/null)
     if [[ -z "$latest_json" ]]; then
-      echo "Error: Could not reach GitHub."
+      echo "Couldn't reach github"
       exit 1
     fi
     tag=$(echo "$latest_json" | grep -o '"tag_name":"[^"]*"' | head -n1 | sed 's/"tag_name":"//;s/"//')
   fi
 
   if [[ -z "$tag" ]]; then
-    echo "No official releases found on GitHub."
+    echo "No updates found"
     exit 0
   fi
 
@@ -46,7 +46,7 @@ if [[ "${1:-}" == "-U" || "${1:-}" == "--update" ]]; then
     if [[ "$latest_is_newer" == "$tag_clean" ]]; then
       echo "Update available: $current_ver → $tag"
     else
-      echo "You are running a newer version than the latest release ($current_ver > $tag)."
+      echo "You're on a newer version (ur not me u bum) ($current_ver > $tag)."
     fi
   fi
   exit 0
