@@ -1,10 +1,4 @@
 #!/usr/bin/env bash
-
-if [[ "${1:-}" == "-V" || "${1:-}" == "--version" ]]; then
-  echo "${VENTA_VERSION:-dev}"
-  exit 0
-fi
-
 set -u
 
 hex_to_ansi() {
@@ -119,6 +113,7 @@ bases=(A T C G)
 comp=(T A G C)
 rungs=('─' '─' '═' '─' '─' '╌' '─' '═' '─' '╌')
 corrupt=('#' '?' '@' '%' '&' 'X' '!' '/' 'S' '\\')
+shards=('·' '*' '+' 'x' '~')
 
 tick=0
 BREAK_TOTAL=18
@@ -499,11 +494,34 @@ while (( running )); do
         case $(( tick%3 )) in 0) b_type=3;b='\';; 1) b_type=3;b='/';; *) b_type=3;; esac
         case $(( (tick+1)%3 )) in 0) c_type=3;c='\';; 1) c_type=3;c='/';; *) c_type=3;; esac
       else
-        gap_chars=('~' '-' '·' ' ')
-        if (( bridge_height>2 )); then
-          put_char $((top+1)) "$x" "${gap_chars[$(( (tick+x)%3 ))]}" 3
-          put_char $((bot-1))  "$x" "${gap_chars[$(( (tick+x+1)%3 ))]}" 3
+        fall_age=$(( BREAK_TOTAL - break_timer[x] - BREAK_SNAP )) # 0 → ~13
+        max_fall=$(( cols / 4 )) # Limits how far debris falls before vanishing
+
+        if (( fall_age < max_fall )); then
+          dy1=$(( y1 + fall_age + ( (x+tick)%2 ) ))
+          if (( dy1 >= 0 && dy1 < rows )); then
+            ch=${shards[$(( (x+tick) % 5 ))]}
+            ctype_fall=$(( depth > 0 ? depth - 1 : 0 ))
+            put_char "$dy1" "$x" "$ch" $ctype_fall
+          fi
+
+          dy2=$(( y2 + fall_age + ( (x+tick+1)%2 ) ))
+          if (( dy2 >= 0 && dy2 < rows )); then
+            ch=${shards[$(( (x+tick+2) % 5 ))]}
+            put_char "$dy2" "$x" "$ch" $ctype_fall
+          fi
+
+          dy3=$(( mid_y + fall_age + ( (x+tick)%3 ) - 1 ))
+          if (( dy3 >= 0 && dy3 < rows )); then
+            ch=${shards[$(( (x+tick+3) % 5 ))]}
+            put_char "$dy3" "$x" "$ch" 3
+          fi
         fi
+
+        for ((y=top; y<=bot; y++)); do
+          put_char "$y" "$x" " " 1
+        done
+
         case $(( tick%4 )) in 0) b_type=3;b='!';; 1) b_type=3;b='|';; *) ;; esac
         case $(( (tick+2)%4 )) in 0) c_type=3;c='!';; 1) c_type=3;c='|';; *) ;; esac
       fi
