@@ -53,6 +53,7 @@ A mininal dna simulator with corruption,recovery,chaos mainly made to be just so
 - Run **venta** in your terminal
 - Press **r** if you wanna run a manually recovery
 - Run **venta -V** to check the version you're running
+- Run **venta -U** to check if there has been a new version released
 
 <h1 align="center">
 	UPDATING
