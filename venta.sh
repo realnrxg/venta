@@ -4,6 +4,7 @@ if [[ "${1:-}" == "-V" || "${1:-}" == "--version" ]]; then
   exit 0
 fi
 
+#dev stuff
 if [[ "${1:-}" == "-U" || "${1:-}" == "--update" ]]; then
   current_ver="${VENTA_VERSION:-dev}"
   if [[ "$current_ver" == "dev" ]]; then
@@ -44,7 +45,6 @@ if [[ "${1:-}" == "-U" || "${1:-}" == "--update" ]]; then
     latest_is_newer=$(printf '%s\n%s' "$current_clean" "$tag_clean" | sort -V | tail -n1)
     if [[ "$latest_is_newer" == "$tag_clean" ]]; then
       echo "Update available: $current_ver → $tag"
-      echo "To update: nix flake update venta && sudo nixos-rebuild switch --flake .#nixosbtw"
     else
       echo "You are running a newer version than the latest release ($current_ver > $tag)."
     fi
