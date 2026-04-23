@@ -13,32 +13,37 @@ if [[ "${1:-}" == "-U" || "${1:-}" == "--update" ]]; then
 
   echo "Checking for updates"
 
-  if command -v jq >/dev/null; then
-    latest_json=$(curl -s --max-time 5 "https://api.github.com/repos/realnrxg/venta/releases/latest" 2>/dev/null)
-    if [[ -z "$latest_json" ]] || echo "$latest_json" | jq -e '.message' >/dev/null 2>&1; then
-      echo "Rate limited"
-      exit 1
+  fetch_release() {
+    local api_url="$1"
+    local json
+    json=$(curl -s --max-time 5 "$api_url" 2>/dev/null)
+
+    if [[ -n "$json" ]] && echo "$json" | grep -q '"tag_name"'; then
+      if command -v jq >/dev/null; then
+        echo "$json" | jq -r '.tag_name' 2>/dev/null
+      else
+        echo "$json" | grep -o '"tag_name":"[^"]*"' | head -n1 | sed 's/"tag_name":"//;s/"//'
+      fi
     fi
-    tag=$(echo "$latest_json" | jq -r '.tag_name')
-  else
-    latest_json=$(curl -s --max-time 5 "https://api.github.com/repos/realnrxg/venta/releases/latest" 2>/dev/null)
-    if [[ -z "$latest_json" ]]; then
-      echo "Couldn't reach github"
-      exit 1
-    fi
-    tag=$(echo "$latest_json" | grep -o '"tag_name":"[^"]*"' | head -n1 | sed 's/"tag_name":"//;s/"//')
+  }
+
+  tag=$(fetch_release "https://api.github.com/repos/realnrxg/venta/releases/latest")
+
+  if [[ -z "$tag" ]]; then
+    echo "Github is unreachable trying codeberg"
+    tag=$(fetch_release "https://codeberg.org/api/v1/repos/nrxg/venta/releases/latest")
   fi
 
   if [[ -z "$tag" ]]; then
-    echo "No updates found"
-    exit 0
+    echo "Could not reach github or codeberg"
+    exit 1
   fi
 
   tag_clean="${tag#v}"
   current_clean="${current_ver#v}"
 
   if [[ "$tag_clean" == "$current_clean" ]]; then
-    echo "Venta is up to date ($tag)."
+    echo "No new updates found ($tag)."
   else
     latest_is_newer=$(printf '%s\n%s' "$current_clean" "$tag_clean" | sort -V | tail -n1)
     if [[ "$latest_is_newer" == "$tag_clean" ]]; then
