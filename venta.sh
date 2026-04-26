@@ -86,7 +86,8 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
   "dna_color": "#00ffcc",
   "corrupt_color": "#ff0000",
   "recover_color": "#00ff50",
-  "fps": 30
+  "fps": 30,
+  "show_stats": true
 }
 VENTA_CONFIG
 fi
@@ -95,6 +96,7 @@ DNA_HEX="00ffcc"
 CORRUPT_HEX="ff0000"
 RECOVER_HEX="00ff50"
 FPS=30
+SHOW_STATS=true
 
 if [[ -f "$CONFIG_FILE" ]]; then
   _dna=$(awk -F'"' '/"dna_color"/{gsub(/[^0-9a-fA-F]/,"",$4); print $4}' "$CONFIG_FILE" 2>/dev/null)
@@ -105,6 +107,8 @@ if [[ -f "$CONFIG_FILE" ]]; then
   [[ -n "$_cor" && ${#_cor} -eq 6 ]] && CORRUPT_HEX="$_cor"
   [[ -n "$_rec" && ${#_rec} -eq 6 ]] && RECOVER_HEX="$_rec"
   [[ -n "$_fps" ]] && FPS="$_fps"
+  _show=$(awk -F'"' '/"show_stats"/{print $4}' "$CONFIG_FILE" 2>/dev/null)
+  [[ "$_show" == "false" ]] && SHOW_STATS=false
 fi
 
 FRAME_SLEEP=$(awk "BEGIN{printf \"%.6f\", 1/$FPS}")
@@ -158,9 +162,34 @@ read -r rows cols < <(stty size 2>/dev/null || printf '24 80')
 (( rows < 20 )) && rows=20
 (( cols < 50 )) && cols=50
 
+prev_rows=$rows
+prev_cols=$cols
+
 center=$((rows / 2))
 amp=$((rows / 4))
 (( amp < 4 )) && amp=4
+
+resize_arrays() {
+  center=$((rows / 2))
+  amp=$((rows / 4))
+  (( amp < 4 )) && amp=4
+  total=$(( rows * cols ))
+  chars=()
+  cell_type=()
+  for ((i=0;i<total;i++)); do chars[$i]=' '; cell_type[$i]=1; done
+  init_arrays "$cols"
+  return 0
+}
+
+resize_handler() {
+  read -r rows cols < <(stty size 2>/dev/null || printf '24 80')
+  (( rows < 20 )) && rows=20
+  (( cols < 50 )) && cols=50
+  [[ "$rows" -eq "$prev_rows" && "$cols" -eq "$prev_cols" ]] && return 1
+  prev_rows=$rows
+  prev_cols=$cols
+  resize_arrays
+}
 
 mapfile -t SIN < <(awk 'BEGIN{for(i=0;i<360;i++)printf "%d\n",int(sin(i*3.141592653589793/180)*1000)}')
 mapfile -t COS < <(awk 'BEGIN{for(i=0;i<360;i++)printf "%d\n",int(cos(i*3.141592653589793/180)*1000)}')
@@ -226,6 +255,11 @@ total=$(( rows * cols ))
 
 assemble_radius=0
 while (( running && assemble_radius <= cols/2+1 )); do
+  resize_handler || true
+  center=$((rows / 2))
+  amp=$((rows / 4))
+  (( amp < 4 )) && amp=4
+
   a_out=''
   for ((i=0;i<rows;i++)); do
     a_out+=$'\033'; a_out+="[$((i+1));1H"
@@ -322,6 +356,11 @@ while (( running && assemble_radius <= cols/2+1 )); do
 done
 
 while (( running )); do
+  resize_handler || true
+  center=$((rows / 2))
+  amp=$((rows / 4))
+  (( amp < 4 )) && amp=4
+  total=$(( rows * cols ))
 
   key=""
   IFS= read -r -t 0.01 -n 1 key 2>/dev/null || true
@@ -784,8 +823,9 @@ while (( running )); do
   bar_fill=$(( decay_pct/10 )); decay_bar=''
   for ((b=0;b<10;b++)); do (( b<bar_fill )) && decay_bar+='█' || decay_bar+='░'; done
 
+  if [[ "$SHOW_STATS" == "true" ]]; then
   ov_lines=(
-    "┌──────────────────────┐"
+    "┌─   VENTA   ──────────┐"
     "│ FPS   : ${FPS}           │"
     "│ DECAY : [${decay_bar}] ${decay_pct}% │"
     "│ STATE : ${wave_str}     │"
@@ -799,6 +839,7 @@ while (( running )); do
     out+=$'\033'; out+="[$((li+2));${ov_col}H"
     out+="${COL_DNA_DIM}${line}${COL_RESET}"
   done
+  fi
 
   printf '%s' "$out"
   tick=$(( tick+1 ))
