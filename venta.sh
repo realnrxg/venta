@@ -825,7 +825,7 @@ while (( running )); do
 
   if [[ "$SHOW_STATS" == "true" ]]; then
   ov_lines=(
-    "┌─   VENTA   ──────────┐"
+    "┌──────────────────────┐"
     "│ FPS   : ${FPS}           │"
     "│ DECAY : [${decay_bar}] ${decay_pct}% │"
     "│ STATE : ${wave_str}     │"
