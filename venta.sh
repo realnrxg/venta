@@ -107,7 +107,7 @@ if [[ -f "$CONFIG_FILE" ]]; then
   [[ -n "$_cor" && ${#_cor} -eq 6 ]] && CORRUPT_HEX="$_cor"
   [[ -n "$_rec" && ${#_rec} -eq 6 ]] && RECOVER_HEX="$_rec"
   [[ -n "$_fps" ]] && FPS="$_fps"
-  _show=$(awk -F'"' '/"show_stats"/{print $4}' "$CONFIG_FILE" 2>/dev/null)
+  _show=$(sed -n 's/.*"show_stats": *\([^,"]*\).*/\1/p' "$CONFIG_FILE" 2>/dev/null)
   [[ "$_show" == "false" ]] && SHOW_STATS=false
 fi
 
