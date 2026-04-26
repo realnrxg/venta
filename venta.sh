@@ -785,7 +785,7 @@ while (( running )); do
   for ((b=0;b<10;b++)); do (( b<bar_fill )) && decay_bar+='█' || decay_bar+='░'; done
 
   ov_lines=(
-    "┌─   VENTA   ──────────┐"
+    "┌──────────────────────┐"
     "│ FPS   : ${FPS}           │"
     "│ DECAY : [${decay_bar}] ${decay_pct}% │"
     "│ STATE : ${wave_str}     │"
