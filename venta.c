@@ -261,8 +261,7 @@ static void init_trig(void) {
 }
 
 static void check_updates(void) {
-    const char *current = getenv("VENTA_VERSION");
-    if (!current || !*current) current = "dev";
+    const char *current = VENTA_VERSION;
 
     if (strcmp(current, "dev") == 0) {
         printf("use the flakes install u bum\n");
