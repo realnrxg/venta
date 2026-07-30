@@ -8,7 +8,7 @@ A mininal dna simulator with corruption,recovery,chaos mainly made to be just so
 	Showcase
 </h1>
 
-![Demo](.assets/venta.gif)
+![Demo](.assets/showcase.gif)
 
 ## Table of Contents
 - [INSTALLATION](#INSTALLATION)
